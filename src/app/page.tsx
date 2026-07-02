@@ -215,7 +215,8 @@ function RecommendationFlow() {
       }
 
       if (!response.ok) {
-        return null;
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.detail || body.error || "Could not load data.");
       }
 
       return response.json();
@@ -238,9 +239,14 @@ function RecommendationFlow() {
       setLoading(false);
     }
 
-    loadProgress().catch(() => {
+    loadProgress().catch((err) => {
       if (isActive) {
-        setError("Could not start the recommendation engine. Check that Django is running.");
+        const msg = err.message || "";
+        if (msg.includes("Authentication") || msg.includes("credentials") || msg.includes("Unauthorized")) {
+          setError("Login and complete your candidate profile to start the recommendation engine.");
+        } else {
+          setError(msg || "Could not start the recommendation engine. Check that Django is running.");
+        }
         setLoading(false);
       }
     });
