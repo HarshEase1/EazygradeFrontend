@@ -107,7 +107,7 @@ jobs:
             exit 1
           fi
 
-          scp -i ~/.ssh/production_key \
+          scp -o IdentitiesOnly=yes -i ~/.ssh/production_key \
             "$RUNNER_TEMP/frontend-release.tar.gz" \
             "$PRODUCTION_USER@$PRODUCTION_HOST:/tmp/frontend-release-${{ github.sha }}.tar.gz"
 
@@ -126,7 +126,7 @@ jobs:
             exit 1
           fi
 
-          ssh -i ~/.ssh/production_key "$PRODUCTION_USER@$PRODUCTION_HOST" \
+          ssh -o IdentitiesOnly=yes -i ~/.ssh/production_key "$PRODUCTION_USER@$PRODUCTION_HOST" \
             "DEPLOY_PATH='${DEPLOY_PATH}' SERVICE_NAME='${SERVICE_NAME}' RELEASE_ID='${{ github.sha }}' bash -s" <<'REMOTE'
           set -euo pipefail
 
@@ -134,6 +134,9 @@ jobs:
           RELEASES_PATH="$DEPLOY_PATH/releases"
           RELEASE_PATH="$RELEASES_PATH/$RELEASE_ID"
           ARCHIVE_PATH="/tmp/frontend-release-$RELEASE_ID.tar.gz"
+
+          sudo systemctl stop "$SERVICE_NAME" || true
+          sudo fuser -k 3000/tcp || true
 
           mkdir -p "$RELEASES_PATH"
           rm -rf "$RELEASE_PATH"
@@ -150,7 +153,7 @@ jobs:
           ln -sfn "$RELEASE_PATH" "$DEPLOY_PATH/current-next"
           mv -Tf "$DEPLOY_PATH/current-next" "$DEPLOY_PATH/current"
 
-          sudo systemctl restart "$SERVICE_NAME"
+          sudo systemctl start "$SERVICE_NAME"
 
           sleep 5
           systemctl is-active --quiet "$SERVICE_NAME"
