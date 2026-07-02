@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build and deploy
+    name: Build and deploy frontend
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -43,6 +43,7 @@ jobs:
         run: |
           if [ -n "$FRONTEND_ENV_PRODUCTION" ]; then
             printf '%s\n' "$FRONTEND_ENV_PRODUCTION" > .env.production
+            chmod 600 .env.production
           fi
 
       - name: Build
@@ -50,34 +51,82 @@ jobs:
 
       - name: Package release
         run: |
-          release_files=( \
-            .next \
-            public \
-            package.json \
-            yarn.lock \
-            next.config.mjs \
+          release_files=(
+            .next
+            public
+            package.json
+            yarn.lock
           )
+
+          if [ -f next.config.mjs ]; then
+            release_files+=(next.config.mjs)
+          fi
+
+          if [ -f next.config.js ]; then
+            release_files+=(next.config.js)
+          fi
+
           if [ -f .env.production ]; then
             release_files+=(.env.production)
           fi
+
           tar -czf "$RUNNER_TEMP/frontend-release.tar.gz" "${release_files[@]}"
 
       - name: Configure SSH
+        env:
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
         run: |
+          if [ -z "$PRODUCTION_SSH_KEY" ]; then
+            echo "PRODUCTION_SSH_KEY secret is missing"
+            exit 1
+          fi
+
+          if [ -z "$PRODUCTION_HOST" ]; then
+            echo "PRODUCTION_HOST secret is missing"
+            exit 1
+          fi
+
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/production_key
+          printf '%s\n' "$PRODUCTION_SSH_KEY" > ~/.ssh/production_key
           chmod 600 ~/.ssh/production_key
-          ssh-keyscan -H "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$PRODUCTION_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload release archive
+        env:
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
         run: |
+          if [ -z "$PRODUCTION_USER" ]; then
+            echo "PRODUCTION_USER secret is missing"
+            exit 1
+          fi
+
+          if [ -z "$PRODUCTION_HOST" ]; then
+            echo "PRODUCTION_HOST secret is missing"
+            exit 1
+          fi
+
           scp -i ~/.ssh/production_key \
             "$RUNNER_TEMP/frontend-release.tar.gz" \
-            "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/tmp/frontend-release-${{ github.sha }}.tar.gz"
+            "$PRODUCTION_USER@$PRODUCTION_HOST:/tmp/frontend-release-${{ github.sha }}.tar.gz"
 
       - name: Activate release
+        env:
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
         run: |
-          ssh -i ~/.ssh/production_key "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}" \
+          if [ -z "$PRODUCTION_USER" ]; then
+            echo "PRODUCTION_USER secret is missing"
+            exit 1
+          fi
+
+          if [ -z "$PRODUCTION_HOST" ]; then
+            echo "PRODUCTION_HOST secret is missing"
+            exit 1
+          fi
+
+          ssh -i ~/.ssh/production_key "$PRODUCTION_USER@$PRODUCTION_HOST" \
             "DEPLOY_PATH='${DEPLOY_PATH}' SERVICE_NAME='${SERVICE_NAME}' RELEASE_ID='${{ github.sha }}' bash -s" <<'REMOTE'
           set -euo pipefail
 
@@ -94,6 +143,7 @@ jobs:
           rm -f "$ARCHIVE_PATH"
 
           cd "$RELEASE_PATH"
+
           corepack enable || true
           yarn install --frozen-lockfile --production=true
 
@@ -101,6 +151,9 @@ jobs:
           mv -Tf "$DEPLOY_PATH/current-next" "$DEPLOY_PATH/current"
 
           sudo systemctl restart "$SERVICE_NAME"
+
+          sleep 5
+          systemctl is-active --quiet "$SERVICE_NAME"
 
           cd "$RELEASES_PATH"
           ls -1dt */ | tail -n +4 | xargs -r rm -rf
