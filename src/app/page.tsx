@@ -153,7 +153,7 @@ function Badge({ children, dark = false }) {
     <span
       className={`rounded-full border px-3 py-1.5 text-xs font-black ${
         dark
-          ? "border-neutral-950 bg-neutral-950 text-yellow-300"
+          ? "border-neutral-950 bg-neutral-950 text-[#ddff5b]"
           : "border-amber-200 bg-amber-50 text-amber-950"
       }`}
     >
@@ -177,7 +177,7 @@ function AnalysisWaitingCard({ compact = false }) {
             Checking profile, courses, eligibility, and matches. This can take a moment.
           </p>
         </div>
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-yellow-300 text-xl font-black text-neutral-950">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#ddff5b] text-xl font-black text-neutral-950">
           ...
         </span>
       </div>
@@ -185,11 +185,11 @@ function AnalysisWaitingCard({ compact = false }) {
       <div className={`mt-5 grid gap-3 ${compact ? "" : "sm:grid-cols-3"}`}>
         {["Profile", "Eligibility", "Ranking"].map((label) => (
           <div
-            className="overflow-hidden rounded-lg border border-stone-200 bg-[#fffaf0] p-3"
+            className="overflow-hidden rounded-lg border border-stone-200 bg-[#fbfff0] p-3"
             key={label}
           >
             <p className="text-xs font-black uppercase text-stone-500">{label}</p>
-            <div className="mt-3 h-3 animate-pulse rounded-full bg-gradient-to-r from-yellow-100 via-yellow-300 to-yellow-100" />
+            <div className="mt-3 h-3 animate-pulse rounded-full bg-gradient-to-r from-[#ddff5b]/10 via-[#ddff5b]/40 to-[#ddff5b]/10" />
             <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-stone-100" />
           </div>
         ))}
@@ -283,7 +283,7 @@ function RecommendationFlow() {
           </p>
         </div>
         <Link
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-neutral-950 text-2xl font-black text-yellow-300 transition hover:bg-stone-800"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-neutral-950 text-2xl font-black text-[#ddff5b] transition hover:bg-stone-800"
           href={isReady ? "/eligibility" : "/onboarding"}
           aria-label="Open full analysis page"
         >
@@ -307,9 +307,9 @@ function RecommendationFlow() {
                 <span
                   className={`z-10 grid h-9 w-9 place-items-center rounded-full border text-xs font-black ${
                     isComplete
-                      ? "border-neutral-950 bg-neutral-950 text-yellow-300"
+                      ? "border-neutral-950 bg-neutral-950 text-[#ddff5b]"
                       : index === 0 && loading
-                        ? "border-yellow-300 bg-yellow-300 text-neutral-950"
+                        ? "border-[#ddff5b] bg-[#ddff5b] text-neutral-950"
                         : "border-stone-200 bg-white text-stone-400"
                   }`}
                 >
@@ -336,7 +336,7 @@ function RecommendationFlow() {
           </span>
         ) : null}
         <Link
-          className="rounded-full border border-stone-200 bg-yellow-50 px-3 py-1.5 text-xs font-black text-neutral-950 transition hover:border-yellow-300 hover:bg-yellow-100"
+          className="rounded-full border border-stone-200 bg-[#fbfff0] px-3 py-1.5 text-xs font-black text-neutral-950 transition hover:border-[#ddff5b] hover:bg-[#f4ffd1]"
           href={isReady ? "/eligibility" : "/onboarding"}
         >
           {isReady ? "Open full analysis" : "Complete profile"} →
@@ -435,7 +435,7 @@ function ResultCard({ result, index }) {
         </div>
         {result.source_url ? (
           <a
-            className="shrink-0 rounded-full border border-stone-200 bg-white px-4 py-2 text-center text-sm font-black text-neutral-950 transition hover:border-yellow-300 hover:bg-yellow-50"
+            className="shrink-0 rounded-full border border-stone-200 bg-white px-4 py-2 text-center text-sm font-black text-neutral-950 transition hover:border-[#ddff5b] hover:bg-[#fbfff0]"
             href={result.source_url}
             target="_blank"
             rel="noreferrer"
@@ -447,7 +447,7 @@ function ResultCard({ result, index }) {
       </div>
 
       {headline ? (
-        <p className="mt-4 border-l-4 border-yellow-300 bg-[#fffaf0] px-4 py-3 text-sm font-semibold leading-7 text-stone-700 sm:text-[15px]">
+        <p className="mt-4 border-l-4 border-[#ddff5b] bg-[#fbfff0] px-4 py-3 text-sm font-semibold leading-7 text-stone-700 sm:text-[15px]">
           {headline}
         </p>
       ) : null}
@@ -456,7 +456,7 @@ function ResultCard({ result, index }) {
         <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {detailRows.map(([label, value]) => (
             <div
-              className="min-w-0 rounded-xl border border-stone-200 bg-white p-4 shadow-[0_1px_0_rgba(18,18,18,0.04)] transition hover:border-yellow-300 hover:bg-yellow-50/30"
+              className="min-w-0 rounded-xl border border-stone-200 bg-white p-4 shadow-[0_1px_0_rgba(18,18,18,0.04)] transition hover:border-[#ddff5b] hover:bg-[#fbfff0]/30"
               key={`${label}-${value}`}
             >
               <dt className="mb-2 text-[11px] font-black uppercase text-stone-500">
@@ -683,7 +683,7 @@ export default function Home() {
           aria-label="Search filters"
         >
           <div>
-            <label className="mb-2 block text-xs font-black uppercase text-yellow-200" htmlFor="source">
+            <label className="mb-2 block text-xs font-black uppercase text-[#ddff5b]" htmlFor="source">
               Source
             </label>
             <select
@@ -700,7 +700,7 @@ export default function Home() {
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-black uppercase text-yellow-200" htmlFor="type">
+            <label className="mb-2 block text-xs font-black uppercase text-[#ddff5b]" htmlFor="type">
               Type
             </label>
             <select
@@ -717,7 +717,7 @@ export default function Home() {
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-black uppercase text-yellow-200" htmlFor="limit">
+            <label className="mb-2 block text-xs font-black uppercase text-[#ddff5b]" htmlFor="limit">
               Limit
             </label>
             <select
@@ -745,7 +745,7 @@ export default function Home() {
             />
             <span
               className={`flex h-6 w-11 rounded-full p-0.5 transition ${
-                dedupe ? "bg-neutral-600" : "bg-yellow-300"
+                dedupe ? "bg-neutral-600" : "bg-[#ddff5b]"
               }`}
             >
               <span
@@ -814,7 +814,7 @@ export default function Home() {
                   transition={{ delay: index * 0.04 }}
                   key={index}
                 >
-                  <div className="h-full animate-pulse bg-gradient-to-r from-white via-yellow-100 to-white" />
+                  <div className="h-full animate-pulse bg-gradient-to-r from-white via-[#ddff5b]/20 to-white" />
                 </motion.div>
               ))}
             </div>
@@ -847,7 +847,7 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:flex">
                   <button
-                    className="rounded-full border border-stone-200 px-5 py-2.5 text-sm font-black text-neutral-950 transition enabled:hover:border-yellow-300 enabled:hover:bg-yellow-50 disabled:cursor-not-allowed disabled:opacity-45"
+                    className="rounded-full border border-stone-200 px-5 py-2.5 text-sm font-black text-neutral-950 transition enabled:hover:border-[#ddff5b] enabled:hover:bg-[#fbfff0] disabled:cursor-not-allowed disabled:opacity-45"
                     type="button"
                     disabled={!pagination?.has_previous || isLoading}
                     onClick={() => setOffset(pagination.previous_offset ?? 0)}
@@ -855,7 +855,7 @@ export default function Home() {
                     Previous
                   </button>
                   <button
-                    className="rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-black text-yellow-300 transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-45"
+                    className="rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-black text-[#ddff5b] transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-45"
                     type="button"
                     disabled={!pagination?.has_next || isLoading}
                     onClick={() => setOffset(pagination.next_offset ?? offset + numericLimit)}
