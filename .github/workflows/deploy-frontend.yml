@@ -1,0 +1,107 @@
+name: Deploy frontend to production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      NODE_VERSION: "22"
+      DEPLOY_PATH: ${{ vars.FRONTEND_DEPLOY_PATH || '~/frontend' }}
+      SERVICE_NAME: ${{ vars.FRONTEND_SERVICE_NAME || 'eazygrade-frontend' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Write production env
+        env:
+          FRONTEND_ENV_PRODUCTION: ${{ secrets.FRONTEND_ENV_PRODUCTION }}
+        run: |
+          if [ -n "$FRONTEND_ENV_PRODUCTION" ]; then
+            printf '%s\n' "$FRONTEND_ENV_PRODUCTION" > .env.production
+          fi
+
+      - name: Build
+        run: yarn build
+
+      - name: Package release
+        run: |
+          release_files=( \
+            .next \
+            public \
+            package.json \
+            yarn.lock \
+            next.config.mjs \
+          )
+          if [ -f .env.production ]; then
+            release_files+=(.env.production)
+          fi
+          tar -czf "$RUNNER_TEMP/frontend-release.tar.gz" "${release_files[@]}"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/production_key
+          chmod 600 ~/.ssh/production_key
+          ssh-keyscan -H "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload release archive
+        run: |
+          scp -i ~/.ssh/production_key \
+            "$RUNNER_TEMP/frontend-release.tar.gz" \
+            "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/tmp/frontend-release-${{ github.sha }}.tar.gz"
+
+      - name: Activate release
+        run: |
+          ssh -i ~/.ssh/production_key "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}" \
+            "DEPLOY_PATH='${DEPLOY_PATH}' SERVICE_NAME='${SERVICE_NAME}' RELEASE_ID='${{ github.sha }}' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          DEPLOY_PATH="${DEPLOY_PATH/#\~/$HOME}"
+          RELEASES_PATH="$DEPLOY_PATH/releases"
+          RELEASE_PATH="$RELEASES_PATH/$RELEASE_ID"
+          ARCHIVE_PATH="/tmp/frontend-release-$RELEASE_ID.tar.gz"
+
+          mkdir -p "$RELEASES_PATH"
+          rm -rf "$RELEASE_PATH"
+          mkdir -p "$RELEASE_PATH"
+
+          tar -xzf "$ARCHIVE_PATH" -C "$RELEASE_PATH"
+          rm -f "$ARCHIVE_PATH"
+
+          cd "$RELEASE_PATH"
+          corepack enable || true
+          yarn install --frozen-lockfile --production=true
+
+          ln -sfn "$RELEASE_PATH" "$DEPLOY_PATH/current-next"
+          mv -Tf "$DEPLOY_PATH/current-next" "$DEPLOY_PATH/current"
+
+          sudo systemctl restart "$SERVICE_NAME"
+
+          cd "$RELEASES_PATH"
+          ls -1dt */ | tail -n +4 | xargs -r rm -rf
+          REMOTE

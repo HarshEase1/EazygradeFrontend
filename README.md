@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# EazyGrad Frontend
+
+The landing page is a student-facing AI programme search. Students type a goal in natural language and receive ranked programme matches with reasoning, watch-outs, source labels, filters, and a visible hallucination guard.
+
+Architecture details live in [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
 
 ## Getting Started
 
